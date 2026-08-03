@@ -44,28 +44,28 @@ class ManimRenderer:
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def render(self, code_string: str, scene_class_name: str = "GeneratedScene", quality: str = "l") -> str:
+    def render(self, code_string: str, scene_class_name: str = "GeneratedScene", quality: str = "l", output_filename: str = "manim_raw.mp4") -> str:
         """
         Renders the Python code string to an MP4 video file.
         Returns the absolute filepath to the rendered MP4 video.
         """
         # Attempt rendering provided code string
-        result_path = self._try_render_code(code_string, scene_class_name, quality)
+        result_path = self._try_render_code(code_string, scene_class_name, quality, output_filename)
         if result_path:
             return result_path
 
         # Secondary fallback: Render default structured Manim scene code
         logger.warning("Primary Manim code failed. Attempting fallback Manim scene compilation...")
-        fallback_path = self._try_render_code(DEFAULT_FALLBACK_MANIM, scene_class_name, quality)
+        fallback_path = self._try_render_code(DEFAULT_FALLBACK_MANIM, scene_class_name, quality, output_filename)
         if fallback_path:
             return fallback_path
 
         # Final fallback: FFmpeg dark gradient canvas
-        fallback_mp4 = os.path.abspath(os.path.join(self.output_dir, "manim_raw.mp4"))
+        fallback_mp4 = os.path.abspath(os.path.join(self.output_dir, output_filename))
         self._create_fallback_video(fallback_mp4)
         return fallback_mp4
 
-    def _try_render_code(self, code_string: str, scene_class_name: str, quality: str) -> Optional[str]:
+    def _try_render_code(self, code_string: str, scene_class_name: str, quality: str, output_filename: str) -> Optional[str]:
         with tempfile.TemporaryDirectory() as tmpdir:
             script_path = os.path.join(tmpdir, "scene.py")
             with open(script_path, "w", encoding="utf-8") as f:
@@ -88,7 +88,7 @@ class ManimRenderer:
                         for file in files:
                             if file.endswith(".mp4"):
                                 generated_mp4 = os.path.join(root, file)
-                                dest_mp4 = os.path.abspath(os.path.join(self.output_dir, "manim_raw.mp4"))
+                                dest_mp4 = os.path.abspath(os.path.join(self.output_dir, output_filename))
                                 shutil.copy(generated_mp4, dest_mp4)
                                 logger.info(f"Manim render successful: {dest_mp4}")
                                 return dest_mp4

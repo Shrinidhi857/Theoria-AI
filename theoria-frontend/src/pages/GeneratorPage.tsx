@@ -12,6 +12,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import readyCheckSvg from "@/assets/ready_check.svg"
 
 type Phase = "idle" | "loading" | "done" | "error"
 
@@ -146,7 +147,7 @@ function StepsPanel({ currentStep }: { currentStep: number }) {
               {/* Icon / spinner / check */}
               <div className="mt-0.5 shrink-0">
                 {done ? (
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <img src={readyCheckSvg} className="h-4 w-4 shrink-0" alt="Done" />
                 ) : active ? (
                   <Loader2 className="h-4 w-4 text-primary animate-spin" />
                 ) : (

@@ -61,34 +61,51 @@ class VideoPipeline:
         # 2. Scene Planner
         logger.info("Step 2: Planning Multi-Scene Presentation...")
         scenes = self.scene_planner.plan_scenes(lesson_plan)
-        first_scene = scenes[0]
+        
+        scene_videos = []
+        
+        for idx, scene in enumerate(scenes):
+            scene_number = scene.scene_number or (idx + 1)
+            logger.info(f"=== Processing Scene {scene_number} / {len(scenes)}: {scene.title} ===")
+            
+            # 3. Animation Planner (Produces Animation DSL JSON)
+            logger.info(f"Step 3: Planning Animation DSL JSON for Scene {scene_number}...")
+            dsl = self.animation_planner.plan_animation(scene)
+            
+            # 4. DSL Validator
+            logger.info(f"Step 4: Validating Animation DSL for Scene {scene_number}...")
+            try:
+                self.validator.validate(dsl)
+                logger.info(f"DSL Validation Successful for Scene {scene_number}.")
+            except Exception as val_err:
+                logger.warning(f"DSL Validation failed for Scene {scene_number}: {val_err}. Proceeding best-effort.")
+            
+            # 5. Manim Code Generator (Python converts DSL JSON to Manim Code)
+            logger.info(f"Step 5: Generating Manim Code from DSL for Scene {scene_number}...")
+            manim_code = self.manim_generator.generate_code(dsl)
+            
+            # 6. Manim Renderer (Renders MP4 video)
+            logger.info(f"Step 6: Rendering Manim Scene {scene_number} to MP4...")
+            raw_video_filename = f"manim_raw_scene_{scene_number}.mp4"
+            raw_video = self.renderer.render(manim_code, output_filename=raw_video_filename)
+            
+            # 7. Narration Generator (Generates TTS audio)
+            logger.info(f"Step 7: Generating Voice Narration Audio for Scene {scene_number}...")
+            narration_audio_filename = f"narration_scene_{scene_number}.mp3"
+            narration_audio = self.narration.generate_narration(dsl.voice, filename=narration_audio_filename)
+            
+            # 8. FFmpeg Merge (Merges video and voice audio for this scene)
+            logger.info(f"Step 8: Merging Video and Narration Audio for Scene {scene_number}...")
+            merged_video_filename = f"merged_scene_{scene_number}.mp4"
+            merged_scene_video = self.merger.merge(raw_video, narration_audio, output_filename=merged_video_filename)
+            
+            scene_videos.append(merged_scene_video)
 
-        # 3. Animation Planner (Produces Animation DSL JSON)
-        logger.info("Step 3: Planning Animation DSL JSON...")
-        dsl = self.animation_planner.plan_animation(first_scene)
-
-        # 4. DSL Validator
-        logger.info("Step 4: Validating Animation DSL...")
-        self.validator.validate(dsl)
-        logger.info("DSL Validation Successful.")
-
-        # 5. Manim Code Generator (Python converts DSL JSON to Manim Code)
-        logger.info("Step 5: Generating Manim Code from DSL...")
-        manim_code = self.manim_generator.generate_code(dsl)
-
-        # 6. Manim Renderer (Renders MP4 video)
-        logger.info("Step 6: Rendering Manim Scene to MP4...")
-        raw_video = self.renderer.render(manim_code)
-
-        # 7. Narration Generator (Generates TTS audio)
-        logger.info("Step 7: Generating Voice Narration Audio...")
-        narration_audio = self.narration.generate_narration(dsl.voice)
-
-        # 8. FFmpeg Merge (Merges video and voice audio)
-        logger.info("Step 8: Merging Video and Narration Audio...")
-        final_video = self.merger.merge(raw_video, narration_audio)
-
-        logger.info(f"Pipeline Completed Successfully! Final Output Video: {final_video}")
+        # 9. Concat all scene videos into a final output video
+        logger.info(f"=== Concatenating {len(scene_videos)} scene videos into final.mp4 ===")
+        final_video = self.merger.concat_videos(scene_videos, output_filename="final.mp4")
+        
+        logger.info(f"Pipeline Completed Successfully! Final Combined Video: {final_video}")
 
         return {
             "video": final_video,

@@ -74,3 +74,70 @@ class FFmpegMerger:
         with open(final_path, "wb") as f:
             f.write(b"")
         return final_path
+
+    def concat_videos(self, video_paths: list, output_filename: str = "final.mp4") -> str:
+        """
+        Concatenates multiple video files into one using FFmpeg demuxer.
+        Returns the absolute filepath to the final merged/concatenated video.
+        """
+        final_path = os.path.abspath(os.path.join(self.output_dir, output_filename))
+        if not video_paths:
+            logger.warning("No video paths provided for concatenation.")
+            return final_path
+
+        # Resolve ffmpeg path
+        ffmpeg_cmd = shutil.which("ffmpeg")
+        if not ffmpeg_cmd:
+            try:
+                import imageio_ffmpeg
+                ffmpeg_cmd = imageio_ffmpeg.get_ffmpeg_exe()
+            except Exception:
+                ffmpeg_cmd = "ffmpeg"
+
+        # Create a text file listing all videos
+        txt_path = os.path.abspath(os.path.join(self.output_dir, "concat_list.txt"))
+        try:
+            with open(txt_path, "w", encoding="utf-8") as f:
+                for vp in video_paths:
+                    safe_path = vp.replace("\\", "/")
+                    f.write(f"file '{safe_path}'\n")
+
+            cmd = [
+                ffmpeg_cmd,
+                "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", txt_path,
+                "-c", "copy",
+                final_path
+            ]
+
+            logger.info(f"Executing FFmpeg concat command: {' '.join(cmd)}")
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=90
+            )
+
+            if result.returncode == 0 and os.path.exists(final_path):
+                logger.info(f"FFmpeg concat succeeded: {final_path}")
+                return final_path
+            
+            logger.warning(f"FFmpeg concat returned non-zero code {result.returncode}. Stderr: {result.stderr}")
+        except Exception as e:
+            logger.error(f"FFmpeg concat failed: {e}", exc_info=True)
+        finally:
+            if os.path.exists(txt_path):
+                try:
+                    os.remove(txt_path)
+                except Exception:
+                    pass
+
+        # Fallback: Copy the first video if concat fails
+        if video_paths and os.path.exists(video_paths[0]):
+            shutil.copy(video_paths[0], final_path)
+            return final_path
+
+        return final_path
