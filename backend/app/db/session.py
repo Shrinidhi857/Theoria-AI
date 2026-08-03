@@ -1,33 +1,42 @@
 import logging
 from typing import Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 from app.db.base import Base
 
 logger = logging.getLogger(__name__)
 
-# Determine connect args and create engine with fallback resilience
 db_url = settings.DATABASE_URL
-connect_args = {}
 
-if db_url.startswith("sqlite"):
-    connect_args["check_same_thread"] = False
+is_postgres = db_url.startswith("postgresql") or db_url.startswith("postgres")
 
-try:
+if is_postgres:
     engine = create_engine(
         db_url,
-        connect_args=connect_args,
-        pool_pre_ping=True if not db_url.startswith("sqlite") else False
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        echo=False,
     )
-    # Test connection
+else:
+    # SQLite fallback (dev only)
+    engine = create_engine(
+        db_url,
+        connect_args={"check_same_thread": False},
+        echo=False,
+    )
+
+try:
     with engine.connect() as conn:
-        pass
-    logger.info(f"Successfully connected to database: {db_url.split('@')[-1] if '@' in db_url else db_url}")
+        conn.execute(text("SELECT 1"))
+    db_display = db_url.split('@')[-1] if '@' in db_url else db_url
+    logger.info(f"✅ Database connected: {db_display}")
 except Exception as e:
-    logger.warning(f"Could not connect to configured DB ({db_url}): {e}. Falling back to SQLite temporary database.")
-    fallback_url = "sqlite:///./theoria_fallback.db"
-    engine = create_engine(fallback_url, connect_args={"check_same_thread": False})
+    logger.error(f"❌ Database connection failed: {e}")
+    raise RuntimeError(
+        f"Cannot connect to database. Check DATABASE_URL in .env.\nURL: {db_url}\nError: {e}"
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

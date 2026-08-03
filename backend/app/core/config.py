@@ -14,8 +14,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        default="sqlite:///./theoria.db",
-        description="PostgreSQL Database URL e.g. postgresql://user:pass@localhost:5432/theoria_db"
+        default="postgresql://postgres:shri1234@127.0.0.1:5432/theoria_db",
+        description="PostgreSQL Database URL e.g. postgresql://user:pass@host:5432/theoria_db"
     )
 
     # JWT Authentication
