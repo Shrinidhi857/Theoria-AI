@@ -51,7 +51,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onGenerate, isLoading,
                   <>Generating...</>
                 ) : (
                   <>
-                    {compact ? "Go" : "Generate Video"} <Send className="h-4 w-4" />
+                    {compact ? "Go" : ""} <Send className="h-4 w-4" />
                   </>
                 )}
               </Button>

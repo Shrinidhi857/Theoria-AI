@@ -10,6 +10,27 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/context/AuthContext"
 
+import geminiSvg from "@/assets/gemini.svg"
+import neo4jSvg from "@/assets/neo4j.svg"
+import postgresqlSvg from "@/assets/postgresql.svg"
+import reactSvg from "@/assets/react.svg"
+import tailwindSvg from "@/assets/tailwind.svg"
+import typescriptSvg from "@/assets/typescipt.svg"
+import manimSvg from "@/assets/Manim_icon.svg"
+import ffmpegSvg from "@/assets/ffmpeg.svg"
+
+const MARQUEE_ITEMS = [
+  { src: geminiSvg, alt: "Gemini" },
+  { src: neo4jSvg, alt: "Neo4j" },
+  { src: postgresqlSvg, alt: "PostgreSQL" },
+  { src: ffmpegSvg, alt: "Ffmpeg" },
+  { src: reactSvg, alt: "React" },
+  { src: tailwindSvg, alt: "Tailwind" },
+  { src: typescriptSvg, alt: "TypeScript" },
+  { src: manimSvg, alt: "Manim" },
+  
+]
+
 const FEATURES = [
   {
     icon: Brain,
@@ -42,7 +63,7 @@ const FEATURES = [
 ]
 
 const USE_CASES = [
-  { icon: Code2, label: "Sorting Algorithms", example: "Explain Quicksort with array [5,2,8,1,9]" },
+  { icon: Code2, label: "Sorting Algorithms", example: "Explain Quicksort with array [5,2,8,1]" },
   { icon: Network, label: "Graph Traversal", example: "Show DFS on a 6-node graph" },
   { icon: BookOpen, label: "Data Structures", example: "Visualize a Red-Black Tree insertion" },
   { icon: FlaskConical, label: "Math Concepts", example: "Animate the Fourier Transform" },
@@ -70,67 +91,60 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 text-center">
-        
-
-          {/* Content sits above the logo watermark */}
           <div className="relative z-10">
+            {/* Headline */}
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6">
+              <span className="bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+                Turn Any Topic Into
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-primary via-violet-500 to-primary bg-clip-text text-transparent">
+                an Animated Video
+              </span>
+            </h1>
 
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6">
-            <span className="bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
-              Turn Any Topic Into
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-primary via-violet-500 to-primary bg-clip-text text-transparent">
-              an Animated Video
-            </span>
-          </h1>
+            {/* Subhead */}
+            <p className="text-muted-foreground text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed mb-10">
+              Type any algorithm, data structure, or math concept.
+              Theoria AI plans, animates, narrates, and exports a
+              <strong className="text-foreground"> professional teaching video</strong> in seconds.
+            </p>
 
-
-          {/* Subhead */}
-          <p className="text-muted-foreground text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed mb-10">
-            Type any algorithm, data structure, or math concept.
-            Theoria AI plans, animates, narrates, and exports a
-            <strong className="text-foreground"> professional teaching video</strong> in seconds.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button
-              size="lg"
-              onClick={() => navigate("/new")}
-              className="h-14 px-8 text-base font-semibold gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
-            >
-              <Play className="h-5 w-5" />
-              Create a Video Now
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            {!isAuthenticated && (
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
               <Button
                 size="lg"
-                variant="outline"
                 onClick={() => navigate("/new")}
-                className="h-14 px-8 text-base font-semibold gap-2"
+                className="h-14 px-8 text-base font-semibold gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
               >
-                <Sparkles className="h-4 w-4" />
-                Try for Free — No Sign Up
+                <Play className="h-5 w-5" />
+                Create a Video Now
+                <ChevronRight className="h-4 w-4" />
               </Button>
-            )}
-          </div>
+              {!isAuthenticated && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate("/new")}
+                  className="h-14 px-8 text-base font-semibold gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Try for Free — No Sign Up
+                </Button>
+              )}
+            </div>
 
-          {/* Social proof chips */}
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
-            {["Gemini Flash AI", "Manim Engine", "gTTS Narration", "FFmpeg Merge", "MP4 Download"].map((tag) => (
-              <Badge key={tag} variant="secondary" className="px-3 py-1 text-xs font-medium">
-                ✦ {tag}
-              </Badge>
-            ))}
+            {/* Social proof chips */}
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
+              {["Gemini Flash AI", "Manim Engine", "gTTS Narration", "FFmpeg Merge", "MP4 Download"].map((tag) => (
+                <Badge key={tag} variant="secondary" className="px-3 py-1 text-xs font-medium">
+                  ✦ {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
-          </div>{/* end z-10 wrapper */}
         </div>
       </section>
-
-
 
       {/* How It Works */}
       <section className="py-20 border-t border-border/50">
@@ -145,7 +159,6 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {STEPS.map(({ num, title, desc }, i) => (
               <div key={num} className="relative flex flex-col items-center text-center gap-3 group">
-                {/* Connector line */}
                 {i < STEPS.length - 1 && (
                   <div className="hidden md:block absolute top-6 left-[calc(50%+2rem)] w-[calc(100%-2rem)] h-px bg-gradient-to-r from-border to-transparent" />
                 )}
@@ -235,6 +248,36 @@ export const LandingPage: React.FC = () => {
             <Play className="h-5 w-5" />
             Start Creating for Free
           </Button>
+        </div>
+      </section>
+
+      {/* ── Logo-only Marquee at End of Webpage ─────────────────────────────── */}
+      <section
+        className="w-full py-6 border-t border-b border-border/40 relative shrink-0 select-none z-10 overflow-hidden bg-background/50 backdrop-blur-sm"
+        id="global-marquee-bar"
+      >
+        {/* Edge fades */}
+        <div className="absolute left-0 top-0 bottom-0 w-24 md:w-32 z-20 pointer-events-none bg-gradient-to-r from-background to-transparent" />
+        <div className="absolute right-0 top-0 bottom-0 w-24 md:w-32 z-20 pointer-events-none bg-gradient-to-l from-background to-transparent" />
+
+        {/* Scrolling track */}
+        <div
+          className="animate-marquee flex items-center"
+          style={{
+            gap: "7rem",
+          }}
+        >
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map(
+            (item, i) => (
+              <img
+                key={i}
+                src={item.src}
+                alt={item.alt}
+                draggable={false}
+                className="w-12 h-12 md:w-16 md:h-16 object-contain shrink-0 opacity-70 hover:opacity-100 transition-opacity filter drop-shadow-sm"
+              />
+            ),
+          )}
         </div>
       </section>
     </div>

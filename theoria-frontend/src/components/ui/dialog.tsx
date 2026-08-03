@@ -19,10 +19,10 @@ const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
         onClick={() => onOpenChange(false)}
       />
       {/* Modal Dialog Content */}
-      <div className="relative z-50 w-full max-w-lg p-6 bg-background rounded-xl border border-border shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="relative z-50 w-full max-w-[460px] p-7 sm:p-8 bg-card/95 backdrop-blur-xl rounded-2xl border border-border/70 shadow-2xl shadow-primary/10 animate-in zoom-in-95 duration-200 overflow-hidden">
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="absolute right-5 top-5 p-1.5 rounded-full text-muted-foreground opacity-70 transition-all hover:opacity-100 hover:bg-muted/80 focus:outline-none"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>

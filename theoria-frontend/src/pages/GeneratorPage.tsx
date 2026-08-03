@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { engineService } from "@/services/engineService"
 import type { VideoResponse } from "@/services/engineService"
 import { PromptInput } from "@/components/PromptInput"
@@ -7,7 +7,7 @@ import { PIPELINE_STEPS } from "@/utils/constants"
 import {
   CheckCircle2, Loader2, AlertCircle,
   Brain, Lightbulb, PenLine, Clapperboard, Mic,
-  RotateCcw,
+  RotateCcw, Sparkles,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,44 @@ import { Button } from "@/components/ui/button"
 type Phase = "idle" | "loading" | "done" | "error"
 
 const STEP_ICONS = [Brain, Lightbulb, PenLine, Clapperboard, Mic]
+
+const ROTATING_QUESTIONS = [
+  "Stuck on a tricky LeetCode problem?",
+  "Want to visualize algorithm flow step-by-step?",
+  "Struggling to imagine data structures in motion?",
+  "Need visual intuition for mathematical proofs?",
+  "Curious how graph traversal & recursion work?",
+]
+
+function DynamicQuestionHeader() {
+  const [index, setIndex] = useState(0)
+  const [fade, setFade] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false)
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % ROTATING_QUESTIONS.length)
+        setFade(true)
+      }, 250)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="text-center space-y-3">
+      <div className="h-16 flex items-center justify-center">
+        <h1
+          className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight transition-all duration-300 transform bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent ${
+            fade ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+          }`}
+        >
+          {ROTATING_QUESTIONS[index]}
+        </h1>
+      </div>
+    </div>
+  )
+}
 
 // ─── Animated "building" visual for left panel ─────────────────────────────
 
@@ -202,13 +240,8 @@ export const GeneratorPage: React.FC = () => {
   if (phase === "idle") {
     return (
       <div className="min-h-[calc(100vh-7rem)] flex flex-col items-center justify-center px-4 py-16">
-        <div className="w-full max-w-2xl space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">What do you want to visualize?</h1>
-            <p className="text-muted-foreground">
-              Describe any algorithm, data structure, or concept
-            </p>
-          </div>
+        <div className="w-full max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <DynamicQuestionHeader />
           <PromptInput onGenerate={handleGenerate} isLoading={false} />
         </div>
       </div>
