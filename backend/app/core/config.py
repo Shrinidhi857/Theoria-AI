@@ -41,7 +41,18 @@ class Settings(BaseSettings):
 
     # Gemini Engine API Key
     GEMINI_API_KEY: str = Field(default="", description="Google Gemini API Key")
+    GEMINI_API_KEY_BACKUP: str = Field(default="", description="Google Gemini Backup API Key")
     GEMINI_MODEL: str = "gemini-2.5-flash"
+
+    # User Usage Limits
+    MAX_GENERATIONS_PER_USER: int = Field(default=10, description="Max allowed video generations per user account")
+
+    # AWS S3 Storage Config
+    AWS_S3_BUCKET: str = Field(default="", description="AWS S3 Bucket Name for storing videos")
+    AWS_ACCESS_KEY_ID: str = Field(default="", description="AWS Access Key ID")
+    AWS_SECRET_ACCESS_KEY: str = Field(default="", description="AWS Secret Access Key")
+    AWS_REGION: str = Field(default="us-east-1", description="AWS S3 Region")
+    AWS_S3_CUSTOM_DOMAIN: str = Field(default="", description="Optional CloudFront or S3 custom domain")
 
     model_config = SettingsConfigDict(
         env_file=".env",

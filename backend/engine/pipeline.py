@@ -63,6 +63,8 @@ class VideoPipeline:
         scenes = self.scene_planner.plan_scenes(lesson_plan)
         
         scene_videos = []
+        all_dsls = []
+        all_manim_code = []
         
         for idx, scene in enumerate(scenes):
             scene_number = scene.scene_number or (idx + 1)
@@ -71,6 +73,7 @@ class VideoPipeline:
             # 3. Animation Planner (Produces Animation DSL JSON)
             logger.info(f"Step 3: Planning Animation DSL JSON for Scene {scene_number}...")
             dsl = self.animation_planner.plan_animation(scene)
+            all_dsls.append(dsl.model_dump())
             
             # 4. DSL Validator
             logger.info(f"Step 4: Validating Animation DSL for Scene {scene_number}...")
@@ -83,6 +86,7 @@ class VideoPipeline:
             # 5. Manim Code Generator (Python converts DSL JSON to Manim Code)
             logger.info(f"Step 5: Generating Manim Code from DSL for Scene {scene_number}...")
             manim_code = self.manim_generator.generate_code(dsl)
+            all_manim_code.append(manim_code)
             
             # 6. Manim Renderer (Renders MP4 video)
             logger.info(f"Step 6: Rendering Manim Scene {scene_number} to MP4...")
@@ -111,7 +115,9 @@ class VideoPipeline:
             "video": final_video,
             "topic": topic,
             "extracted_parameters": params.model_dump(),
-            "approach": approach.model_dump()
+            "approach": approach.model_dump(),
+            "dsl_code": all_dsls,
+            "manim_code": "\n\n# --- SCENE SEPARATOR ---\n\n".join(all_manim_code)
         }
 
 

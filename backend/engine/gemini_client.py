@@ -1,11 +1,12 @@
 """
 Shared Gemini cascade client.
 Tries each model in GEMINI_MODEL_CASCADE order; first successful call wins.
+Supports primary and backup API keys (GEMINI_API_KEY and GEMINI_API_KEY_BACKUP) if quota is exhausted.
 """
 
 import os
 import logging
-from typing import Optional
+from typing import Optional, List
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,33 +14,50 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+def _mask_key(key: str) -> str:
+    if not key:
+        return ""
+    if len(key) > 10:
+        return f"{key[:6]}...{key[-4:]}"
+    return "***"
+
+
 def _classify_error(model: str, e: Exception) -> str:
     """Return a terse, actionable reason for the failure."""
     msg = str(e)
     if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
-        return f"quota exceeded on '{model}' — trying next model"
+        return f"quota exceeded on '{model}'"
     if "404" in msg or "NOT_FOUND" in msg:
-        return f"model '{model}' not available for your API key — trying next model"
+        return f"model '{model}' not available for this API key"
     if "401" in msg or "403" in msg:
-        return f"authentication error on '{model}' — check GEMINI_API_KEY"
+        return f"authentication error on '{model}' — check API key"
     return f"'{model}' failed: {msg[:80]}"
 
 
 def gemini_generate(prompt: str, models: list, api_key: Optional[str] = None) -> Optional[str]:
     """
-    Call Gemini generateContent with cascade fallback across `models` list.
+    Call Gemini generateContent with cascade fallback across `models` list and candidate API keys.
 
     Args:
         prompt:   The text prompt to send.
         models:   Ordered list of model IDs to try.
-        api_key:  Gemini API key. Falls back to GEMINI_API_KEY env var.
+        api_key:  Gemini API key override. Falls back to GEMINI_API_KEY env var.
 
     Returns:
-        Response text on first success, or None if all models fail.
+        Response text on first success, or None if all keys & models fail.
     """
-    key = api_key or os.getenv("GEMINI_API_KEY")
-    if not key:
-        logger.warning("⚠️  GEMINI_API_KEY is not set. Set it in .env: GEMINI_API_KEY=AIzaSy...")
+    keys_to_try: List[str] = []
+    
+    primary = api_key or os.getenv("GEMINI_API_KEY")
+    if primary:
+        keys_to_try.append(primary)
+        
+    backup = os.getenv("GEMINI_API_KEY_BACKUP")
+    if backup and backup not in keys_to_try:
+        keys_to_try.append(backup)
+
+    if not keys_to_try:
+        logger.warning("⚠️  No GEMINI_API_KEY or GEMINI_API_KEY_BACKUP set in .env")
         return None
 
     try:
@@ -48,21 +66,32 @@ def gemini_generate(prompt: str, models: list, api_key: Optional[str] = None) ->
         logger.warning("⚠️  google-genai package missing. Run: pip install google-genai")
         return None
 
-    client = genai.Client(api_key=key)
-
-    for model in models:
+    for k_idx, key in enumerate(keys_to_try):
+        is_backup = (k_idx > 0)
+        key_label = f"Backup key ({_mask_key(key)})" if is_backup else f"Primary key ({_mask_key(key)})"
+        
         try:
-            logger.info(f"Calling Gemini model: {model}")
-            response = client.models.generate_content(
-                model=model,
-                contents=prompt,
-            )
-            text = response.text.strip()
-            logger.info(f"Model '{model}' responded successfully.")
-            return text
+            client = genai.Client(api_key=key)
         except Exception as e:
-            reason = _classify_error(model, e)
-            logger.warning(f"⚠️  {reason}")
+            logger.warning(f"⚠️  Failed to initialize Gemini client with {key_label}: {e}")
+            continue
 
-    logger.warning("⚠️  All Gemini models in cascade failed. Using structured fallback.")
+        for model in models:
+            try:
+                logger.info(f"Calling Gemini model '{model}' using {key_label}...")
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                )
+                text = response.text.strip()
+                logger.info(f"Model '{model}' responded successfully via {key_label}.")
+                return text
+            except Exception as e:
+                reason = _classify_error(model, e)
+                logger.warning(f"⚠️  [{key_label}] {reason}")
+
+        if k_idx < len(keys_to_try) - 1:
+            logger.warning(f"⚠️  All models failed for {key_label}. Switching to backup API key...")
+
+    logger.warning("⚠️  All Gemini models and API keys in cascade failed. Using structured fallback.")
     return None

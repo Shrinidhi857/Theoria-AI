@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.deps import get_current_active_user, get_optional_current_user
 from app.models.user import User
-from app.schemas.engine import VideoGenerateRequest, VideoResponse, VideoHistoryItem
+from app.schemas.engine import VideoGenerateRequest, VideoResponse, VideoHistoryItem, UserUsageResponse
 from app.services.engine_service import (
     process_video_generation,
     get_user_video_history,
-    get_video_by_id
+    get_video_by_id,
+    get_user_usage
 )
 
 router = APIRouter(prefix="/engine", tags=["Engine"])
@@ -26,6 +27,17 @@ def generate_video_endpoint(
     If authenticated, links video generation history to user profile.
     """
     return process_video_generation(db=db, request=request, current_user=current_user)
+
+
+@router.get("/usage", response_model=UserUsageResponse)
+def get_user_usage_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get user generation usage stats (used vs allowed limit).
+    """
+    return get_user_usage(db=db, user=current_user)
 
 
 @router.get("/videos", response_model=List[VideoHistoryItem])
