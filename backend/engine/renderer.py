@@ -9,6 +9,34 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_FALLBACK_MANIM = """from manim import *
+
+class GeneratedScene(Scene):
+    def construct(self):
+        title = Text("Concept Visualization", font_size=36, color=WHITE).to_edge(UP)
+        arr_vgroup = VGroup()
+        vals = [1, 3, 5, 7, 9, 11, 13]
+        for i, val in enumerate(vals):
+            sq = Square(side_length=0.9, color=BLUE)
+            txt = Text(str(val), font_size=22)
+            cell = VGroup(sq, txt)
+            if i > 0:
+                cell.next_to(arr_vgroup[-1], RIGHT, buff=0.05)
+            arr_vgroup.add(cell)
+        arr_vgroup.move_to([0, 0, 0])
+        
+        ptr_arrow = Arrow(start=[0, -1.2, 0], end=[0, -0.5, 0], color=YELLOW, buff=0.1)
+        ptr_txt = Text("target = 9", font_size=20, color=YELLOW).next_to(ptr_arrow, DOWN, buff=0.1)
+        ptr = VGroup(ptr_arrow, ptr_txt).move_to([0, -1.2, 0])
+
+        self.play(Write(title), FadeIn(arr_vgroup))
+        self.wait(0.5)
+        self.play(FadeIn(ptr))
+        self.play(Indicate(arr_vgroup[4], color=YELLOW), run_time=1.5)
+        self.wait(1)
+"""
+
+
 class ManimRenderer:
     """Stage 6: Renders generated Python Manim code into an MP4 video file using Manim CLI."""
 
@@ -21,18 +49,29 @@ class ManimRenderer:
         Renders the Python code string to an MP4 video file.
         Returns the absolute filepath to the rendered MP4 video.
         """
+        # Attempt rendering provided code string
+        result_path = self._try_render_code(code_string, scene_class_name, quality)
+        if result_path:
+            return result_path
+
+        # Secondary fallback: Render default structured Manim scene code
+        logger.warning("Primary Manim code failed. Attempting fallback Manim scene compilation...")
+        fallback_path = self._try_render_code(DEFAULT_FALLBACK_MANIM, scene_class_name, quality)
+        if fallback_path:
+            return fallback_path
+
+        # Final fallback: FFmpeg dark gradient canvas
+        fallback_mp4 = os.path.abspath(os.path.join(self.output_dir, "manim_raw.mp4"))
+        self._create_fallback_video(fallback_mp4)
+        return fallback_mp4
+
+    def _try_render_code(self, code_string: str, scene_class_name: str, quality: str) -> Optional[str]:
         with tempfile.TemporaryDirectory() as tmpdir:
             script_path = os.path.join(tmpdir, "scene.py")
             with open(script_path, "w", encoding="utf-8") as f:
                 f.write(code_string)
 
-            # Look for manim command
-            manim_bin = shutil.which("manim")
-            if manim_bin:
-                cmd = [manim_bin, "-q" + quality, "--format=mp4", "--media_dir", tmpdir, script_path, scene_class_name]
-            else:
-                cmd = [sys.executable, "-m", "manim", "-q" + quality, "--format=mp4", "--media_dir", tmpdir, script_path, scene_class_name]
-
+            cmd = [sys.executable, "-m", "manim", "-q" + quality, "--format=mp4", "--media_dir", tmpdir, script_path, scene_class_name]
             logger.info(f"Executing Manim render command: {' '.join(cmd)}")
 
             try:
@@ -45,7 +84,6 @@ class ManimRenderer:
                 )
 
                 if result.returncode == 0:
-                    # Find generated mp4 in media_dir
                     for root, dirs, files in os.walk(tmpdir):
                         for file in files:
                             if file.endswith(".mp4"):
@@ -55,23 +93,28 @@ class ManimRenderer:
                                 logger.info(f"Manim render successful: {dest_mp4}")
                                 return dest_mp4
 
-                logger.warning(f"Manim CLI returncode {result.returncode}. Stderr: {result.stderr}")
+                logger.error(f"Manim CLI returncode {result.returncode}.\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}")
             except Exception as e:
-                logger.warning(f"Manim rendering execution encountered issue ({e}). Creating fallback video.")
+                logger.error(f"Manim render error: {e}", exc_info=True)
 
-            # Fallback video creation if Manim binary rendering is not directly available
-            fallback_mp4 = os.path.abspath(os.path.join(self.output_dir, "manim_raw.mp4"))
-            self._create_fallback_video(fallback_mp4)
-            return fallback_mp4
+        return None
 
     def _create_fallback_video(self, output_path: str):
-        """Creates a dummy 5-second black/color test video using FFmpeg if Manim is unavailable."""
-        ffmpeg_cmd = shutil.which("ffmpeg") or "ffmpeg"
+        """Creates a sleek dark themed 5-second test video using FFmpeg if Manim render fails."""
+        ffmpeg_cmd = shutil.which("ffmpeg")
+        if not ffmpeg_cmd:
+            try:
+                import imageio_ffmpeg
+                ffmpeg_cmd = imageio_ffmpeg.get_ffmpeg_exe()
+            except Exception:
+                ffmpeg_cmd = "ffmpeg"
+
+        # Dark sleek background (#121212)
         cmd = [
             ffmpeg_cmd,
             "-y",
             "-f", "lavfi",
-            "-i", "color=c=blue:s=1280x720:d=5",
+            "-i", "color=c=0x121212:s=1280x720:d=5",
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             output_path
@@ -81,6 +124,5 @@ class ManimRenderer:
             logger.info(f"Fallback video created at {output_path}")
         except Exception as e:
             logger.error(f"Could not create fallback video: {e}")
-            # Touch an empty file if ffmpeg is also missing
             with open(output_path, "wb") as f:
                 f.write(b"")

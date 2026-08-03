@@ -134,16 +134,23 @@ class ManimCodeGenerator:
             elif anim_type == AnimationType.MOVE_POINTER.value:
                 ptr_id = anim.pointer or anim.target
                 if isinstance(anim.to, int):
-                    # Move pointer to array element index
+                    arr_ids = [o.id for o in dsl.objects if o.type == ObjectType.ARRAY.value]
+                    arr_key = arr_ids[0] if arr_ids else "array1"
                     lines.append(
-                        f"        target_cell = array_elements['array1'][{anim.to}] if 'array1' in array_elements else objects['{ptr_id}']"
+                        f"        target_cell = array_elements['{arr_key}'][{anim.to}] if '{arr_key}' in array_elements and len(array_elements['{arr_key}']) > {anim.to} else objects.get('{ptr_id}', list(objects.values())[0])"
                     )
                     lines.append(
-                        f"        self.play(objects['{ptr_id}'].animate.next_to(target_cell, DOWN, buff=0.3), run_time={dur})"
+                        f"        if '{ptr_id}' in objects:"
+                    )
+                    lines.append(
+                        f"            self.play(objects['{ptr_id}'].animate.next_to(target_cell, DOWN, buff=0.3), run_time={dur})"
                     )
                 elif isinstance(anim.to, list):
                     lines.append(
-                        f"        self.play(objects['{ptr_id}'].animate.move_to([{anim.to[0]}, {anim.to[1]}, {anim.to[2]}]), run_time={dur})"
+                        f"        if '{ptr_id}' in objects:"
+                    )
+                    lines.append(
+                        f"            self.play(objects['{ptr_id}'].animate.move_to([{anim.to[0]}, {anim.to[1]}, {anim.to[2]}]), run_time={dur})"
                     )
 
         lines.append("        self.wait(1)")
