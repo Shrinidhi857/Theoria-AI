@@ -5,9 +5,9 @@ import { PromptInput } from "@/components/PromptInput"
 import { VideoPlayer } from "@/components/VideoPlayer"
 import { PIPELINE_STEPS } from "@/utils/constants"
 import {
-  CheckCircle2, Loader2, AlertCircle,
+   Loader2, AlertCircle,
   Brain, Lightbulb, PenLine, Clapperboard, Mic,
-  RotateCcw, Sparkles,
+  RotateCcw
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"

@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Sparkles, Send, Lightbulb } from "lucide-react"
+import { Send, Lightbulb } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { SAMPLE_PROMPTS } from "@/utils/constants"

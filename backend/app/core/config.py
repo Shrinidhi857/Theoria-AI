@@ -31,12 +31,14 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = Field(default="", description="Google OAuth Client ID")
     GOOGLE_CLIENT_SECRET: str = Field(default="", description="Google OAuth Client Secret")
 
-    # CORS Settings
+    # CORS Settings — override in .env with BACKEND_CORS_ORIGINS=["https://your-domain.com"]
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "http://54.91.51.85:8000",
+        "*",
     ]
 
     # Gemini Engine API Key

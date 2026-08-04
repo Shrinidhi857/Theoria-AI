@@ -46,14 +46,16 @@ app = FastAPI(
 )
 
 # CORS Configuration
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+_cors_origins = settings.BACKEND_CORS_ORIGINS
+_allow_all_origins = "*" in _cors_origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if _allow_all_origins else _cors_origins,
+    allow_credentials=not _allow_all_origins,  # credentials can't be used with wildcard
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Static Files Mount for Output Videos
 output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output"))

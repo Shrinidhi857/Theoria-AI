@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
-import { LogIn, UserPlus, AlertCircle, Mail, Lock, User, KeyRound, Sparkles, ArrowRight, ShieldAlert } from "lucide-react"
+import { LogIn, UserPlus, AlertCircle, Mail, Lock, User, KeyRound, ArrowRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
-import { Dialog, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -259,7 +259,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
                   "Creating Account..."
                 ) : (
                   <>
-                    Create Account <Sparkles className="h-4 w-4" />
+                    Create Account 
                   </>
                 )}
               </Button>
