@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { History, User, LogOut, Zap } from "lucide-react"
+import { History, User, LogOut, Zap, Network } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ThemeToggle"
@@ -12,8 +12,10 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { path: "/new", id: "studio", label: "Studio", icon: Zap },
+  { path: "/graph", id: "graph", label: "Knowledge Graph", icon: Network },
   { path: "/history", id: "history", label: "History", icon: History },
 ]
+
 
 export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const { user, isAuthenticated, logout } = useAuth()

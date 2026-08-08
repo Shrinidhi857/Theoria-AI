@@ -31,7 +31,7 @@ class VideoPipeline:
         self.narration = NarrationGenerator()
         self.merger = FFmpegMerger()
 
-    def run(self, topic: str) -> Dict[str, Any]:
+    def run(self, topic: str, user_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Executes complete pipeline:
         Lesson Planner (Parameter Extraction & Approach Thinking) -> Scene Planner ->
@@ -39,11 +39,22 @@ class VideoPipeline:
         """
         logger.info(f"=== Starting AI Teaching Engine Pipeline for: '{topic}' ===")
 
+        # Pre-retrieve Neo4j Knowledge Graph Context if available
+        graph_context = ""
+        try:
+            from app.services.graph_service import GraphService
+            graph_context = GraphService.get_graph_context_for_prompt(topic, user_id=user_id)
+            if graph_context:
+                logger.info(f"[Neo4j] Graph context injected into prompt for '{topic}'")
+        except Exception as graph_err:
+            logger.warning(f"[Neo4j] Prompt context pre-retrieval skipped: {graph_err}")
+
         # 1. Lesson Planner & Problem Thinking Phase
         logger.info("Step 1: Analyzing Problem, Extracting Parameters & Formulating Approach...")
-        lesson_plan = self.lesson_planner.plan_lesson(topic)
+        lesson_plan = self.lesson_planner.plan_lesson(topic, graph_context=graph_context)
         params = lesson_plan.extracted_parameters
         approach = lesson_plan.approach
+        knowledge_meta = lesson_plan.knowledge_metadata.model_dump() if lesson_plan.knowledge_metadata else None
 
         logger.info(f"   [Extracted Topic/Algorithm]: {params.algorithm_or_topic}")
         if params.input_data:
@@ -117,20 +128,15 @@ class VideoPipeline:
             "extracted_parameters": params.model_dump(),
             "approach": approach.model_dump(),
             "dsl_code": all_dsls,
-            "manim_code": "\n\n# --- SCENE SEPARATOR ---\n\n".join(all_manim_code)
+            "manim_code": "\n\n# --- SCENE SEPARATOR ---\n\n".join(all_manim_code),
+            "knowledge_metadata": knowledge_meta
         }
 
 
-def generate_video(topic: str) -> Dict[str, Any]:
+def generate_video(topic: str, user_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Main entrypoint function requested by specification.
-    Returns:
-    {
-        "video": "output/final.mp4",
-        "topic": topic,
-        "extracted_parameters": {...},
-        "approach": {...}
-    }
     """
     pipeline = VideoPipeline()
-    return pipeline.run(topic)
+    return pipeline.run(topic, user_id=user_id)
+

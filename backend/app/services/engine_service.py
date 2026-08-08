@@ -70,21 +70,43 @@ def process_video_generation(
 
     try:
         # Run AI Video Pipeline
-        result: Dict[str, Any] = generate_video(request.topic)
+        result: Dict[str, Any] = generate_video(request.topic, user_id=user_id)
         
         local_video_path = result.get("video")
         s3_url = None
         file_size = None
 
-        if local_video_path and os.path.exists(local_video_path):
-            file_size = os.path.getsize(local_video_path)
-            # Upload to AWS S3 if credentials & bucket are configured
-            s3_url = s3_service.upload_video(local_video_path, s3_key=f"videos/user_{user_id or 0}_vid_{video_record.id}.mp4")
+        if local_video_path:
+            # Always resolve to an absolute path — pipeline may return a relative one
+            abs_video_path = os.path.abspath(local_video_path)
+            logger.info(f"Pipeline returned video path: '{local_video_path}' → resolved to '{abs_video_path}'")
+
+            if os.path.exists(abs_video_path):
+                file_size = os.path.getsize(abs_video_path)
+                logger.info(f"Video file confirmed on disk: {file_size:,} bytes")
+
+                if s3_service.is_configured:
+                    logger.info("S3 is configured — attempting upload...")
+                    s3_url = s3_service.upload_video(
+                        abs_video_path,
+                        s3_key=f"videos/user_{user_id or 0}_vid_{video_record.id}.mp4"
+                    )
+                    if s3_url:
+                        logger.info(f"S3 upload succeeded. Video URL: {s3_url}")
+                    else:
+                        logger.warning("S3 upload returned None — falling back to local video path.")
+                else:
+                    logger.info("S3 not configured. Using local video path for video_url.")
+            else:
+                logger.error(f"Video file NOT found at resolved path: '{abs_video_path}'")
+
+        # Use S3 URL if upload succeeded, otherwise fall back to local path
+        video_url_to_store = s3_url or local_video_path
 
         # Update record with output metadata & intermediate DSL code
         video_record.status = "completed"
         video_record.video_path = local_video_path
-        video_record.video_url = s3_url or local_video_path
+        video_record.video_url = video_url_to_store
         video_record.file_size_bytes = file_size
         video_record.extracted_parameters = result.get("extracted_parameters")
         video_record.approach = result.get("approach")
@@ -93,7 +115,24 @@ def process_video_generation(
         db.commit()
         db.refresh(video_record)
 
+
+        # Ingest knowledge metadata into Neo4j Global Knowledge Graph (Graceful Try-Except)
+        try:
+            knowledge_meta = result.get("knowledge_metadata")
+            if knowledge_meta:
+                from app.services.graph_service import GraphService, validate_and_clean_metadata
+                meta_obj = validate_and_clean_metadata(knowledge_meta)
+                GraphService.ingest_knowledge_metadata(
+                    lesson_id=str(video_record.id),
+                    title=request.topic,
+                    user_id=user_id,
+                    metadata=meta_obj
+                )
+        except Exception as graph_err:
+            logger.warning(f"⚠️ [Neo4j] Post-generation graph update error (non-fatal): {graph_err}")
+
         new_usage_count = get_user_generation_count(db, user_id) if user_id else usage_count + 1
+
 
         return VideoResponse(
             id=video_record.id,

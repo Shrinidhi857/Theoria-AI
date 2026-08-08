@@ -10,6 +10,7 @@ __pycache__/
 # Virtual Environment
 venv/
 .venv/
+.env.example
 
 # Output directory & generated media
 output/

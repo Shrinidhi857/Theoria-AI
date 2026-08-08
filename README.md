@@ -41,7 +41,9 @@
 - [About The Project](#-about-the-project)
 - [Key Features](#-key-features)
 - [Architecture & Server Entrypoint](#-architecture--server-entrypoint-mainpy)
+- [Knowledge Graph (Neo4j Integration)](#-knowledge-graph)
 - [AI Video Generation Pipeline](#-ai-video-generation-pipeline)
+
 - [Tech Stack & Badge Showcase](#-tech-stack)
 - [Backend Dependencies Breakdown](#-backend-dependencies-requirements-txt)
 - [Getting Started](#-getting-started)
@@ -129,7 +131,68 @@ app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 ---
 
+## 🧠 Knowledge Graph
+
+Theoria AI maintains a continuously evolving, persistent **Computer Science Knowledge Graph** using **Neo4j**. 
+
+The graph maps relationships between algorithms, data structures, concepts, prerequisites, complexities, generated lessons, and user learning progress.
+
+### 🏛️ PostgreSQL vs Neo4j Responsibilities
+
+| Responsibility Area | PostgreSQL (Relational DB) | Neo4j (Knowledge Graph Layer) |
+|---|---|---|
+| **Users & Auth** | Passwords, Email, OAuth Tokens, Profile | Stable `User` ID node only (No sensitive data) |
+| **Lesson Records** | Video URLs, S3 keys, Manim DSL, execution status | `Lesson` node ID & title for graph relationships |
+| **Relationships** | Transactional foreign keys | Prerequisites (`PREREQUISITE_FOR`), `RELATED_TO`, `USES`, `SOLVES`, `HAS_COMPLEXITY` |
+| **Learning Paths** | N/A | Graph traversals for prerequisite satisfaction & concept recommendations |
+
+### 📐 Graph Schema & Relationships
+
+```
+(User)-[:COMPLETED]->(Concept)
+(Lesson)-[:COVERS]->(Concept)
+(Lesson)-[:VISUALIZES]->(Concept)
+
+(Concept/Algorithm)-[:PREREQUISITE_FOR]->(Concept/Algorithm)
+(Concept/Algorithm)-[:RELATED_TO]->(Concept/Algorithm)
+(Algorithm)-[:USES]->(DataStructure)
+(Algorithm)-[:SOLVES]->(Concept)
+(Concept/Algorithm)-[:HAS_COMPLEXITY]->(Complexity)
+```
+
+### ⚡ Automatic Knowledge Extraction & Graph Growth Pipeline
+
+When a user requests a lesson:
+1. **Graph Pre-Retrieval**: Before calling Gemini for lesson planning, relevant graph subgraphs (prerequisites, related concepts, complexity, user progress) are retrieved from Neo4j and injected into the Gemini prompt as context.
+2. **Knowledge Extraction**: Gemini produces structured educational metadata (`primary_concept`, `concepts`, `algorithms`, `data_structures`, `prerequisites`, `related_concepts`, `complexity`).
+3. **Canonical Normalization & MERGE**: Concepts are normalized (e.g. `Binary Search` -> `binary_search`) and ingested into Neo4j using idempotent Cypher `MERGE` queries to prevent duplicate nodes.
+4. **Graceful Degradation**: If `NEO4J_ENABLED=false` or Neo4j is temporarily unavailable, lesson generation and video rendering continue without interruption.
+
+### 🚀 Seeding the Knowledge Graph
+
+Seed the foundational Computer Science graph by running:
+
+```bash
+cd backend
+python -m scripts.seed_knowledge_graph
+```
+
+### ⚙️ Neo4j AuraDB Configuration
+
+Configure the following environment variables in `backend/.env`:
+
+```env
+NEO4J_ENABLED=true
+NEO4J_URI=neo4j+s://your-instance.databases.neo4j.io
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=your_neo4j_password
+NEO4J_DATABASE=neo4j
+```
+
+---
+
 ## 🔄 AI Video Generation Pipeline
+
 
 The heart of the AI Teaching Engine is located in `backend/engine/pipeline.py`. It executes an 8-stage automated workflow:
 

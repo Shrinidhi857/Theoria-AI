@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.db.session import init_db
+from app.db.neo4j import init_neo4j_driver, close_neo4j_driver
 from app.api.v1.router import api_v1_router
 
 # Configure logging
@@ -19,20 +20,28 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan event handler initializing DB tables and ensuring output directory exists."""
-    logger.info("Initializing Database Tables...")
+    """Lifespan event handler initializing DB tables, Neo4j connection, and output directory."""
+    logger.info("Initializing Relational Database Tables...")
     try:
         init_db()
     except Exception as e:
         logger.error(f"Error during DB initialization: {e}")
     
+    logger.info("Initializing Neo4j Knowledge Graph Driver...")
+    try:
+        init_neo4j_driver()
+    except Exception as e:
+        logger.warning(f"Error during Neo4j initialization: {e}")
+
     # Ensure output directory exists for video storage
     output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output"))
     os.makedirs(output_dir, exist_ok=True)
     logger.info(f"Video Output directory ready: {output_dir}")
     
     yield
-    logger.info("Shutting down Application...")
+    logger.info("Shutting down Application and closing database drivers...")
+    close_neo4j_driver()
+
 
 
 app = FastAPI(

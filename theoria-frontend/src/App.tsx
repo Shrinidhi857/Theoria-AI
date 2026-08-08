@@ -9,6 +9,8 @@ import { LandingPage } from "@/pages/LandingPage"
 import { GeneratorPage } from "@/pages/GeneratorPage"
 import { HistoryPage } from "@/pages/HistoryPage"
 import { ProfilePage } from "@/pages/ProfilePage"
+import { KnowledgeGraphPage } from "@/pages/KnowledgeGraphPage"
+
 
 /** Auth-aware button for the landing page slim header */
 function LandingAuthButton({ onAuthClick }: { onAuthClick: () => void }) {
@@ -92,11 +94,13 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/new" element={<GeneratorPage />} />
+          <Route path="/graph" element={<KnowledgeGraphPage />} />
           <Route path="/history" element={<HistoryPage onAuthClick={() => setAuthOpen(true)} />} />
           <Route path="/profile" element={<ProfilePage />} />
           {/* Catch-all → landing */}
           <Route path="*" element={<LandingPage />} />
         </Routes>
+
       </main>
 
       <footer className="relative z-10 border-t border-border/50 py-4 px-6 text-center text-xs text-muted-foreground">

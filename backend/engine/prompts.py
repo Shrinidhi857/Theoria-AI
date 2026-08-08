@@ -12,9 +12,11 @@ Analyze the following teaching request or LeetCode-style problem:
 
 User Request: "{topic}"
 
+{graph_context}
+
 YOUR TASK:
 1. Extract or infer concrete problem parameters:
-   - Identify the algorithm/topic (e.g. "Binary Search", "Merge Sort").
+   - Identify the algorithm/topic (e.g. "Binary Search", "Merge Sort", "Dijkstra's Algorithm").
    - Extract any provided sample input array/dataset (e.g. [1, 3, 5, 7, 9]) or infer a clear, simple realistic array if none given.
    - Extract any target/search value (e.g. 7) or infer a suitable target if none given.
    - Classify the problem type ("Algorithmic Walkthrough", "LeetCode Problem", "Conceptual Explanation").
@@ -25,7 +27,16 @@ YOUR TASK:
    - Step-by-step Execution: Trace every iteration/step on the concrete sample input with low, mid, high pointers or state variables.
    - Time & Space Complexity: O(...) analysis.
 
-3. Create a Structured Presentation Script Outline:
+3. Extract Educational Knowledge Metadata for Global Knowledge Graph:
+   - primary_concept: Main core concept/algorithm
+   - concepts: List of computer science concepts involved
+   - algorithms: List of specific algorithms mentioned or used
+   - data_structures: List of data structures used (e.g. Array, Priority Queue, Graph)
+   - prerequisites: Prerequisite concepts needed before this lesson
+   - related_concepts: Related algorithms or concepts
+   - complexity: Complexity notations e.g. ["O(log n)", "O(1)"]
+
+4. Create a Structured Presentation Script Outline:
    - Scene 1: Hook & Problem Definition (show input array and target).
    - Scene 2: Algorithm Strategy & Pointer Setup.
    - Scene 3: Step-by-step Trace / State Transitions.
@@ -59,11 +70,21 @@ Return a STRICT JSON object conforming to this schema:
     "Initialize low=0, high=4, compute mid=2 (value 5)",
     "Compare 5 with target 7 and shift low pointer to index 3",
     "Compute mid=3 (value 7), match target, return index 3"
-  ]
+  ],
+  "knowledge_metadata": {{
+    "primary_concept": "Binary Search",
+    "concepts": ["Searching", "Divide and Conquer"],
+    "algorithms": ["Binary Search"],
+    "data_structures": ["Array"],
+    "prerequisites": ["Array", "Sorting"],
+    "related_concepts": ["Linear Search", "Two Pointer"],
+    "complexity": ["O(log n)", "O(1)"]
+  }}
 }}
 
 Output STRICTLY valid JSON without markdown formatting or introductory text.
 """
+
 
 SCENE_PLANNER_PROMPT = """You are a visual scene director for educational computer science animations.
 Given the following Lesson Plan and Problem Approach, break it down into sequential visual presentation scenes for Manim animation.

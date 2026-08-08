@@ -77,6 +77,16 @@ class ProblemApproach(BaseModel):
     time_and_space_complexity: str = Field(..., description="Time and space complexity explanation")
 
 
+class KnowledgeMetadata(BaseModel):
+    primary_concept: str = Field(default="Computer Science Concept", description="Main concept taught in lesson")
+    concepts: List[str] = Field(default_factory=list, description="General concepts involved in lesson")
+    algorithms: List[str] = Field(default_factory=list, description="Specific algorithms demonstrated")
+    data_structures: List[str] = Field(default_factory=list, description="Data structures used or explained")
+    prerequisites: List[str] = Field(default_factory=list, description="Prerequisite concepts needed before this lesson")
+    related_concepts: List[str] = Field(default_factory=list, description="Related algorithms or concepts")
+    complexity: List[str] = Field(default_factory=list, description="Time and space complexity notations (e.g. O(log n))")
+
+
 class LessonPlan(BaseModel):
     topic: str
     extracted_parameters: ExtractedParameters
@@ -84,6 +94,8 @@ class LessonPlan(BaseModel):
     overview: str
     learning_objectives: List[str]
     presentation_script_outline: List[str]
+    knowledge_metadata: Optional[KnowledgeMetadata] = None
+
 
 
 class ScenePlan(BaseModel):

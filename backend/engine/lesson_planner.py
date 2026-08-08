@@ -6,6 +6,7 @@ from engine.models import (
     LessonPlan,
     ExtractedParameters,
     ProblemApproach,
+    KnowledgeMetadata,
     GEMINI_MODEL_CASCADE
 )
 from engine.gemini_client import gemini_generate
@@ -39,6 +40,8 @@ def _extract_params_from_topic(topic: str) -> ExtractedParameters:
     algo_name = "Binary Search"
     if "merge" in topic.lower():
         algo_name = "Merge Sort"
+    elif "dijkstra" in topic.lower():
+        algo_name = "Dijkstra's Algorithm"
     elif "recursion" in topic.lower():
         algo_name = "Recursion"
 
@@ -56,8 +59,9 @@ class LessonPlanner:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key
 
-    def plan_lesson(self, topic: str) -> LessonPlan:
-        prompt = LESSON_PLANNER_PROMPT.format(topic=topic)
+    def plan_lesson(self, topic: str, graph_context: Optional[str] = None) -> LessonPlan:
+        ctx_str = f"\n{graph_context}\n" if graph_context else ""
+        prompt = LESSON_PLANNER_PROMPT.format(topic=topic, graph_context=ctx_str)
 
         text = gemini_generate(prompt, models=GEMINI_MODEL_CASCADE, api_key=self.api_key)
         if text:
@@ -97,5 +101,15 @@ class LessonPlanner:
                 "Set low, high, and compute mid index.",
                 "Compare middle value against target and adjust pointers.",
                 f"Target {target_str} found! Summarize complexity."
-            ]
+            ],
+            knowledge_metadata=KnowledgeMetadata(
+                primary_concept=params.algorithm_or_topic,
+                concepts=["Algorithms", "Searching"],
+                algorithms=[params.algorithm_or_topic],
+                data_structures=["Array"],
+                prerequisites=["Array", "Sorting"],
+                related_concepts=["Linear Search", "Two Pointer"],
+                complexity=["O(log n)", "O(1)"]
+            )
         )
+
