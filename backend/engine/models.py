@@ -4,7 +4,7 @@ from typing import List, Optional, Any, Dict, Union
 from pydantic import BaseModel, Field
 
 # ── Model Cascade Configuration ───────────────────────────────────────────────
-_DEFAULT_CASCADE = "gemini-3.6-flash,gemini-2.0-flash,gemini-flash-latest"
+_DEFAULT_CASCADE = "gemini-2.0-flash,gemini-1.5-flash,gemini-flash-latest"
 GEMINI_MODEL_CASCADE: List[str] = [
     m.strip()
     for m in os.getenv("GEMINI_MODELS", _DEFAULT_CASCADE).split(",")
@@ -117,3 +117,61 @@ class PipelineResult(BaseModel):
     narration_audio: Optional[str] = None
     status: str = "success"
     error: Optional[str] = None
+
+
+# ── Multi-Agent Evolution Schemas (v2) ────────────────────────────────────────
+
+class RenderError(BaseModel):
+    kind: str = Field(default="unknown", description="syntax, manim_api_misuse, geometry_out_of_bounds, timeout, missing_asset, unknown")
+    raw_stderr: str = Field(default="", description="Compiler stderr traceback output")
+    suspected_source: str = Field(default="code_generator", description="code_generator, dsl, or renderer_env")
+
+
+class RepairTranscript(BaseModel):
+    scene_number: int
+    attempt: int
+    dsl_snapshot: SceneDSL
+    code_before: str
+    error: RenderError
+    code_after: Optional[str] = None
+    outcome: str = Field(default="repair_attempted", description="success, repair_attempted, budget_exhausted")
+    timestamp: str = ""
+
+
+class VisualIssue(BaseModel):
+    description: str
+    likely_cause: str = Field(default="code_gen", description="dsl, code_gen, or renderer")
+    suggested_fix: str
+    severity: str = Field(default="cosmetic", description="blocking or cosmetic")
+
+
+class VisualQAReport(BaseModel):
+    scene_number: int
+    passed: bool
+    issues: List[VisualIssue] = Field(default_factory=list)
+
+
+class StyleGuide(BaseModel):
+    palette: Dict[str, str] = Field(
+        default_factory=lambda: {
+            "background": "#121212",
+            "primary": "BLUE",
+            "accent": "YELLOW",
+            "highlight": "GREEN",
+            "text": "WHITE"
+        }
+    )
+    font_scale: float = Field(default=1.0)
+    camera_margin: float = Field(default=0.5)
+    pointer_color: str = Field(default="YELLOW")
+    highlight_color: str = Field(default="GREEN")
+
+
+class PedagogicalScore(BaseModel):
+    clarity: int = Field(default=5, ge=1, le=5)
+    accuracy: int = Field(default=5, ge=1, le=5)
+    pacing: int = Field(default=5, ge=1, le=5)
+    engagement: int = Field(default=5, ge=1, le=5)
+    weakest_scene: Optional[int] = None
+    notes: str = ""
+

@@ -14,7 +14,11 @@ from app.services.auth_service import (
     refresh_access_token
 )
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 

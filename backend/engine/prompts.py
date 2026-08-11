@@ -232,3 +232,113 @@ Return a STRICT JSON object matching this schema:
 
 Output STRICTLY raw JSON without markdown backticks or commentary.
 """
+
+
+REPAIR_AGENT_PROMPT = """You are an Expert Manim Python Code Repair Engineer.
+Fix the following failing Manim Python code script based on the compiler error traceback.
+
+SCENE DSL INTENT:
+{dsl_json}
+
+PRIOR FAILING MANIM CODE:
+```python
+{prior_code}
+```
+
+COMPILER STDERR TRACEBACK / ERROR:
+{stderr}
+
+SUSPECTED ERROR KIND: {error_kind}
+
+YOUR TASK:
+1. Diagnose why the script failed to compile or render under Manim CLI.
+2. Fix syntax errors, Manim API mismatches, or layout out-of-bound errors.
+3. Return the COMPLETE, valid, executable Python script defining class `GeneratedScene(Scene)`.
+
+Output ONLY executable Python code within raw string or standard python formatting. Do not add conversational intro/outro text.
+"""
+
+
+VISUAL_QA_PROMPT = """You are a Visual Quality Assurance Agent for educational computer science animations.
+Examine the attached keyframe screenshots rendered from a Manim animation scene.
+
+SCENE DSL INTENT:
+{dsl_json}
+
+CHECKLIST FOR CRITIQUE:
+1. Frame Bounds: Are all visual elements (text, arrays, pointers) fully contained inside the 16:9 canvas frame?
+2. Overlap & Collisions: Does any text overlap array cells or other labels?
+3. Legibility: Is text crisp and legible against the dark background?
+4. Pointer Placement: Is the pointer positioned correctly below/above target array cells?
+5. Fade/Visibility: Are elements cleanly presented?
+
+Return a STRICT JSON object matching this schema:
+{{
+  "scene_number": {scene_number},
+  "passed": true,
+  "issues": [
+    {{
+      "description": "Pointer arrow slightly overlaps array cell text label",
+      "likely_cause": "code_gen",
+      "suggested_fix": "Increase DOWN buff distance in next_to for pointer arrow",
+      "severity": "cosmetic"
+    }}
+  ]
+}}
+
+If there are no blocking issues, set "passed": true and "issues": [].
+Output STRICTLY valid JSON without markdown commentary.
+"""
+
+
+STYLE_GUIDE_PROMPT = """You are an Art Director for Computer Science Visualizations.
+Formulate a cohesive visual style guide for a multi-scene animation lesson on topic: "{topic}".
+
+YOUR TASK:
+Define a dark-mode harmonious color palette and layout parameters.
+
+Return a STRICT JSON object matching this schema:
+{{
+  "palette": {{
+    "background": "#121212",
+    "primary": "BLUE",
+    "accent": "YELLOW",
+    "highlight": "GREEN",
+    "text": "WHITE"
+  }},
+  "font_scale": 1.0,
+  "camera_margin": 0.5,
+  "pointer_color": "YELLOW",
+  "highlight_color": "GREEN"
+}}
+
+Output STRICTLY valid JSON without markdown text.
+"""
+
+
+PEDAGOGICAL_EVALUATOR_PROMPT = """You are a Senior Computer Science Professor evaluating a visual video lesson.
+
+LESSON TOPIC: "{topic}"
+PROBLEM APPROACH: {approach_json}
+GENERATED SCENE DSLS: {all_dsls_json}
+
+YOUR TASK:
+Evaluate the pedagogical quality of this visual lesson on a scale of 1 to 5:
+- Clarity (1-5): Is the concept explained intuitively?
+- Accuracy (1-5): Is the algorithm/code logic trace 100% accurate?
+- Pacing (1-5): Is the progression smooth across scenes?
+- Engagement (1-5): Does the presentation keep the learner focused?
+
+Return a STRICT JSON object matching this schema:
+{{
+  "clarity": 5,
+  "accuracy": 5,
+  "pacing": 5,
+  "engagement": 5,
+  "weakest_scene": null,
+  "notes": "Excellent step-by-step breakdown of Binary Search state transitions."
+}}
+
+Output STRICTLY valid JSON without introductory commentary.
+"""
+

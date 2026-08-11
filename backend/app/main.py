@@ -10,12 +10,12 @@ from app.db.session import init_db
 from app.db.neo4j import init_neo4j_driver, close_neo4j_driver
 from app.api.v1.router import api_v1_router
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+from app.core.logging_config import setup_colored_logging
+
+# Initialize global colored logging
+setup_colored_logging()
 logger = logging.getLogger(__name__)
+
 
 
 @asynccontextmanager

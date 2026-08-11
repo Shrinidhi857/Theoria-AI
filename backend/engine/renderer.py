@@ -6,7 +6,11 @@ import subprocess
 import logging
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 DEFAULT_FALLBACK_MANIM = """from manim import *

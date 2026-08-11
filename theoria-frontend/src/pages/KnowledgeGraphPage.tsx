@@ -11,7 +11,7 @@ import {
   Zap,
   Info,
   Layers,
-  Award
+  
 } from "lucide-react";
 import {
   getGraphVisualization,
