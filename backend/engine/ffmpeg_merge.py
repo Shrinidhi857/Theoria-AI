@@ -3,7 +3,11 @@ import shutil
 import subprocess
 import logging
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging("engine.ffmpeg_merge")
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 class FFmpegMerger:

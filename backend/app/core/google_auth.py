@@ -5,7 +5,11 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from app.core.config import settings
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 def verify_google_id_token(token: str) -> Optional[Dict[str, Any]]:

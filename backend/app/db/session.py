@@ -5,7 +5,11 @@ from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 from app.db.base import Base
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 db_url = settings.DATABASE_URL
 

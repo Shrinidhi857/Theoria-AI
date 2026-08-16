@@ -3,7 +3,11 @@ import shutil
 import subprocess
 import logging
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging("engine.narration")
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 class NarrationGenerator:
@@ -27,10 +31,10 @@ class NarrationGenerator:
             from gtts import gTTS
             tts = gTTS(text=voice_text, lang="en")
             tts.save(output_path)
-            logger.info(f"gTTS narration synthesized successfully: {output_path}")
+            logger.info(f"🎹 [TTS] gTTS narration synthesized successfully → {output_path}")
             return output_path
         except Exception as e:
-            logger.warning(f"gTTS narration failed ({e}). Generating fallback audio file.")
+            logger.warning(f"⚠️  [TTS] gTTS narration failed ({e}). Generating fallback FFmpeg sine audio...")
 
         # Fallback audio generation using FFmpeg sine wave if gTTS is unavailable
         self._create_fallback_audio(output_path)
@@ -51,8 +55,8 @@ class NarrationGenerator:
         ]
         try:
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-            logger.info(f"Fallback audio created at {output_path}")
+            logger.info(f"✅ [TTS] Fallback silence audio created at: {output_path}")
         except Exception as e:
-            logger.error(f"Could not create fallback audio: {e}")
+            logger.error(f"❌ [TTS] Could not create fallback audio: {e}")
             with open(output_path, "wb") as f:
                 f.write(b"")

@@ -6,12 +6,16 @@ Supports primary and backup API keys (GEMINI_API_KEY and GEMINI_API_KEY_BACKUP) 
 
 import os
 import logging
-from typing import Optional, List
+from typing import Optional, List, Any
 from dotenv import load_dotenv
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 def _mask_key(key: str) -> str:
@@ -95,3 +99,65 @@ def gemini_generate(prompt: str, models: list, api_key: Optional[str] = None) ->
 
     logger.warning("⚠️  All Gemini models and API keys in cascade failed. Using structured fallback.")
     return None
+
+
+def gemini_generate_vision(
+    prompt: str,
+    images: List[Any],
+    models: list,
+    api_key: Optional[str] = None
+) -> Optional[str]:
+    """
+    Call Gemini generateContent with vision capability (text + images) across cascade.
+
+    Args:
+        prompt:  Text prompt describing visual check.
+        images:  List of PIL Image objects or image bytes.
+        models:  Ordered list of model IDs to try.
+        api_key: Gemini API key override.
+
+    Returns:
+        Response text on success, or None on failure.
+    """
+    keys_to_try: List[str] = []
+    primary = api_key or os.getenv("GEMINI_API_KEY")
+    if primary:
+        keys_to_try.append(primary)
+    backup = os.getenv("GEMINI_API_KEY_BACKUP")
+    if backup and backup not in keys_to_try:
+        keys_to_try.append(backup)
+
+    if not keys_to_try:
+        return None
+
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        logger.warning("⚠️  google-genai package missing.")
+        return None
+
+    contents = [prompt] + images
+
+    for k_idx, key in enumerate(keys_to_try):
+        try:
+            client = genai.Client(api_key=key)
+        except Exception:
+            continue
+
+        for model in models:
+            try:
+                logger.info(f"Calling Gemini Vision model '{model}' with {len(images)} keyframe image(s)...")
+                response = client.models.generate_content(
+                    model=model,
+                    contents=contents,
+                )
+                text = response.text.strip()
+                logger.info(f"Gemini Vision model '{model}' responded successfully.")
+                return text
+            except Exception as e:
+                reason = _classify_error(model, e)
+                logger.warning(f"⚠️  Vision call failed on '{model}': {reason}")
+
+    return None
+

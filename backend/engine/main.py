@@ -8,40 +8,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from engine.pipeline import generate_video
 
-# ── Colored logging setup ──────────────────────────────────────────────────────
-try:
-    import colorlog
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
-        fmt="%(log_color)s%(asctime)s [%(levelname)-8s]%(reset)s %(cyan)s%(name)s%(reset)s: %(message)s",
-        datefmt="%H:%M:%S",
-        log_colors={
-            "DEBUG":    "white",
-            "INFO":     "green",
-            "WARNING":  "yellow,bold",
-            "ERROR":    "red,bold",
-            "CRITICAL": "red,bold,bg_white",
-        },
-        secondary_log_colors={
-            "message": {
-                "WARNING":  "yellow",
-                "ERROR":    "red",
-                "CRITICAL": "red",
-            }
-        }
-    ))
-    logging.root.setLevel(logging.INFO)
-    logging.root.addHandler(handler)
-    # Suppress noisy google / httpx DEBUG logs
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("google_genai").setLevel(logging.WARNING)
+from app.core.logging_config import setup_colored_logging
 
-except ImportError:
-    # Fallback to plain logging if colorlog is not available
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
+# Initialize global colored logging
+setup_colored_logging()
+logger = logging.getLogger(__name__)
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 

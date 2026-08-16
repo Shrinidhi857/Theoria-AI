@@ -29,4 +29,8 @@ gTTS==2.5.4
 imageio-ffmpeg==0.6.0
 colorlog==6.9.0
 
+langgraph>=1.2.0
+pillow>=10.0.0
+nest_asyncio>=1.6.0
+
 pytest==8.4.1

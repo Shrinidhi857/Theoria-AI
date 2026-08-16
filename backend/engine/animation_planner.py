@@ -6,7 +6,11 @@ from engine.models import ScenePlan, SceneDSL, DSLObject, DSLAnimation, GEMINI_M
 from engine.gemini_client import gemini_generate
 from engine.prompts import ANIMATION_PLANNER_PROMPT
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 class AnimationPlanner:

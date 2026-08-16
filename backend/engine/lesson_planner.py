@@ -12,7 +12,11 @@ from engine.models import (
 from engine.gemini_client import gemini_generate
 from engine.prompts import LESSON_PLANNER_PROMPT
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 def _extract_params_from_topic(topic: str) -> ExtractedParameters:

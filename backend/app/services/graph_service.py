@@ -14,7 +14,11 @@ from app.schemas.graph import (
     ConceptRecommendation
 )
 
-logger = logging.getLogger(__name__)
+try:
+    from app.core.logging_config import setup_colored_logging
+    logger = setup_colored_logging(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 def normalize_concept_name(name: str) -> str:
