@@ -55,6 +55,13 @@
 
 ---
 
+<!-- DEMO PREVIEW -->
+<p align="center">
+  <img src="demo.gif" alt="Theoria AI Demo" width="100%">
+</p>
+
+---
+
 ## 📖 About The Project
 
 **Theoria AI** is an end-to-end AI teaching engine and animation platform designed to automate the creation of high-quality mathematical, scientific, and computer science visual lessons. 
