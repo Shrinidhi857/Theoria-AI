@@ -1,1 +1,3 @@
 backend/.env.example
+theoria-frontend\.env
+backend/engine/ir_pipeline_example.py
